@@ -1,0 +1,39 @@
+{
+  "name": "progetto-astar",
+  "version": "1.0.0",
+  "description": "Back-end per modelli di ricerca del percorso su griglia (A*) con crowd-sourcing",
+  "main": "dist/src/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/src/server.js",
+    "dev": "ts-node-dev --respawn src/server.ts",
+    "seed": "ts-node src/seeders/seed.ts --force",
+    "seed:prod": "node dist/src/seeders/seed.js",
+    "token": "ts-node scripts/generate-token.ts",
+    "postman": "ts-node scripts/costruisciPostman.ts",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "astar-typescript": "^1.2.7",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.8"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.6.6",
+    "jest": "^30.5.2",
+    "ts-jest": "^29.4.15",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "5.6"
+  }
+}

@@ -1,0 +1,1516 @@
+{
+  "info": {
+    "name": "Pathfinding crowd-sourcing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Eseguire in ordine su un DB appena seedato. Selezionare l'environment \"Pathfinding local\"."
+  },
+  "item": [
+    {
+      "name": "1 - Autenticazione",
+      "item": [
+        {
+          "name": "Senza token -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Token esauriti (credito 0) -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEsaurito}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Token valido -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"versione >= 2 e pending presente\", function () { const j = pm.response.json(); pm.expect(j.version).to.be.at.least(2); pm.expect(j.hasPendingRequests).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "status"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Modelli",
+      "item": [
+        {
+          "name": "Crea modello (3x3) -> 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"addebito 0.225 token\", function () { pm.expect(pm.response.json().charged).to.eql(0.225); });",
+                  "pm.environment.set(\"newModelId\", pm.response.json().model.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Modello Postman\",\n  \"grid\": [\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      1,\n      0\n    ],\n    [\n      0,\n      0,\n      0\n    ]\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Griglia non valida (valore 2) -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"x\",\n  \"grid\": [\n    [\n      0,\n      2\n    ]\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Nome mancante -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grid\": [\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      1,\n      0\n    ],\n    [\n      0,\n      0,\n      0\n    ]\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Esegui modello 1 -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"percorso, costo e tempo presenti\", function () { const j = pm.response.json(); pm.expect(j.found).to.eql(true); pm.expect(j.path.length).to.be.above(1); pm.expect(j.pathCost).to.eql(8); pm.expect(j.executionTimeMs).to.be.a(\"number\"); pm.expect(j.tokensCharged).to.eql(0.625); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start\": {\n    \"x\": 0,\n    \"y\": 0\n  },\n  \"goal\": {\n    \"x\": 4,\n    \"y\": 4\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "execute"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start su un ostacolo -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start\": {\n    \"x\": 0,\n    \"y\": 3\n  },\n  \"goal\": {\n    \"x\": 4,\n    \"y\": 4\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "execute"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Goal fuori griglia -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start\": {\n    \"x\": 0,\n    \"y\": 0\n  },\n  \"goal\": {\n    \"x\": 9,\n    \"y\": 9\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "execute"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Modello inesistente -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/999/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "999",
+                "status"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Richieste di aggiornamento",
+      "item": [
+        {
+          "name": "Proprietario modifica (1,1) -> applicata subito",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"ACCEPTED e addebito 0.35\", function () { const j = pm.response.json(); pm.expect(j.status).to.eql(\"ACCEPTED\"); pm.expect(j.appliedImmediately).to.eql(true); pm.expect(j.charged).to.eql(0.35); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cells\": [\n    {\n      \"x\": 1,\n      \"y\": 1,\n      \"value\": 0\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Non proprietario (4,3) -> PENDING",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"PENDING\", function () { pm.expect(pm.response.json().status).to.eql(\"PENDING\"); });",
+                  "pm.environment.set(\"updateId1\", pm.response.json().updates[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenLuigi}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cells\": [\n    {\n      \"x\": 4,\n      \"y\": 3,\n      \"value\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cella già uguale al valore richiesto -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenLuigi}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cells\": [\n    {\n      \"x\": 0,\n      \"y\": 0,\n      \"value\": 0\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cella fuori griglia -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenLuigi}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cells\": [\n    {\n      \"x\": 50,\n      \"y\": 50,\n      \"value\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Stato modello: ci sono pending",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"2 pending\", function () { pm.expect(pm.response.json().pendingRequests).to.eql(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenLuigi}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pending del proprietario (Mario)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"2 richieste pending\", function () { pm.expect(pm.response.json().length).to.eql(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/updates/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "updates",
+                "pending"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pending di Luigi (nessuna sui suoi modelli)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"lista vuota\", function () { pm.expect(pm.response.json().length).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenLuigi}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/updates/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "updates",
+                "pending"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 - Approvazione / rifiuto",
+      "item": [
+        {
+          "name": "Non proprietario prova ad approvare -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenLuigi}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decisions\": [\n    {\n      \"updateId\": 2,\n      \"approve\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates",
+                "review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bulk: approva #2, rifiuta richiesta salvata",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"1 accettata e 1 rifiutata\", function () { const j = pm.response.json(); pm.expect(j.accepted).to.eql(1); pm.expect(j.rejected).to.eql(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decisions\": [\n    {\n      \"updateId\": 2,\n      \"approve\": true\n    },\n    {\n      \"updateId\": {{updateId1}},\n      \"approve\": false\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates",
+                "review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Luigi fa una nuova richiesta (4,0)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"updateId2\", pm.response.json().updates[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenLuigi}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cells\": [\n    {\n      \"x\": 4,\n      \"y\": 0,\n      \"value\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rotta singola: approva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ACCEPTED\", function () { pm.expect(pm.response.json().updates[0].status).to.eql(\"ACCEPTED\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approve\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/updates/{{updateId2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "updates",
+                "{{updateId2}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Richiesta già gestita -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approve\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/updates/{{updateId2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "updates",
+                "{{updateId2}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Body bulk non valido -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decisions\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates",
+                "review"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 - Storico aggiornamenti",
+      "item": [
+        {
+          "name": "Storico completo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"accepted e rejected presenti\", function () { const j = pm.response.json(); pm.expect(j.accepted.length).to.be.above(0); pm.expect(j.rejected.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtro intervallo (from + to)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"risultati nell'intervallo\", function () { pm.expect(pm.response.json().accepted.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates?from=2020-01-01&to=2100-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2020-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2100-01-01"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Solo from nel futuro -> vuoto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"nessun risultato\", function () { const j = pm.response.json(); pm.expect(j.accepted.length + j.rejected.length).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates?from=2100-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2100-01-01"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Solo to nel passato -> vuoto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"nessun risultato\", function () { const j = pm.response.json(); pm.expect(j.accepted.length + j.rejected.length).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates?to=2020-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ],
+              "query": [
+                {
+                  "key": "to",
+                  "value": "2020-01-01"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Data non valida -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates?from=ciao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "ciao"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Solo rifiutate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"accepted vuoto\", function () { pm.expect(pm.response.json().accepted.length).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates?status=REJECTED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "REJECTED"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 - Admin e credito",
+      "item": [
+        {
+          "name": "Ricarica da utente normale -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenMario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"luigi@example.com\",\n  \"credit\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/recharge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "recharge"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ricarica da admin -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"nuovo credito 10\", function () { pm.expect(pm.response.json().credit).to.eql(10); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"esaurito@example.com\",\n  \"credit\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/recharge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "recharge"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Utente ricaricato ora può usare le API -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEsaurito}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/models/1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ricarica con email inesistente -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nessuno@example.com\",\n  \"credit\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/recharge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "recharge"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ricarica con body non valido -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"non-una-mail\",\n  \"credit\": -1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/recharge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "recharge"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Imposta Luigi a 0.1 token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"luigi@example.com\",\n  \"credit\": 0.1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/recharge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "recharge"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Credito insufficiente per l'aggiornamento -> 402",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 402\", function () { pm.response.to.have.status(402); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenLuigi}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cells\": [\n    {\n      \"x\": 0,\n      \"y\": 4,\n      \"value\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/models/1/updates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "models",
+                "1",
+                "updates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ripristina credito di Luigi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"luigi@example.com\",\n  \"credit\": 300\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/recharge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "recharge"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
